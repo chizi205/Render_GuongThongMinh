@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tải Ảnh - IGF Kiosk</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family: Inter, Arial, sans-serif;
+      }
+
+      :root {
+        --bg: #f5f7ff;
+        --card: rgba(255, 255, 255, 0.92);
+        --text: #1f2937;
+        --muted: #6b7280;
+        --primary: #4f46e5;
+        --primary-hover: #4338ca;
+        --border: #e5e7eb;
+        --danger: #dc2626;
+        --success: #15803d;
+        --shadow: 0 20px 60px rgba(79, 70, 229, 0.15);
+        --radius: 24px;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(
+            circle at top left,
+            rgba(99, 102, 241, 0.18),
+            transparent 28%
+          ),
+          radial-gradient(
+            circle at bottom right,
+            rgba(139, 92, 246, 0.16),
+            transparent 28%
+          ),
+          var(--bg);
+        color: var(--text);
+      }
+
+      .wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 460px;
+        background: var(--card);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 28px 24px 24px;
+      }
+
+      .brand {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 14px;
+      }
+
+      .brand-badge {
+        min-width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        box-shadow: 0 14px 30px rgba(79, 70, 229, 0.35);
+      }
+
+      .title {
+        text-align: center;
+        font-size: 26px;
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+
+      .subtitle {
+        text-align: center;
+        font-size: 14px;
+        color: var(--muted);
+        line-height: 1.5;
+        margin-bottom: 22px;
+      }
+
+      .instruction-box {
+        background: rgba(79, 70, 229, 0.08);
+        border: 1px solid rgba(79, 70, 229, 0.2);
+        color: var(--primary);
+        padding: 14px;
+        border-radius: 16px;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 20px;
+        line-height: 1.5;
+      }
+
+      .image-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .image-item {
+        width: 100%;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 2px solid var(--border);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+        background: #fff;
+        animation: fadeIn 0.4s ease forwards;
+        opacity: 0;
+      }
+
+      .image-item img {
+        width: 100%;
+        display: block;
+        object-fit: contain;
+      }
+
+      .image-item:nth-child(1) { animation-delay: 0.1s; }
+      .image-item:nth-child(2) { animation-delay: 0.2s; }
+      .image-item:nth-child(3) { animation-delay: 0.3s; }
+      .image-item:nth-child(4) { animation-delay: 0.4s; }
+
+      .loading, .error-message {
+        text-align: center;
+        padding: 40px 0;
+        font-weight: 600;
+      }
+      
+      .error-message {
+        color: var(--danger);
+      }
+
+      .footer-note {
+        margin-top: 24px;
+        text-align: center;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.5;
+        font-weight: 500;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 520px) {
+        .card {
+          padding: 24px 18px 20px;
+          border-radius: 20px;
+        }
+        .title {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="card">
+        <div class="brand">
+          <div class="brand-badge">IGF</div>
+        </div>
+
+        <div class="title">Ảnh Của Bạn</div>
+        <div class="subtitle">
+          Cảm ơn bạn đã trải nghiệm dịch vụ tại Kiosk
+        </div>
+
+        <div class="instruction-box">
+          💡 <b>Hướng dẫn:</b> Nhấn giữ vào từng ảnh bên dưới khoảng 2 giây và chọn "Lưu hình ảnh" để tải về máy nhé!
+        </div>
+
+        <div id="imageContainer" class="image-list">
+          <div class="loading">Đang kết nối để tải ảnh...</div>
+        </div>
+
+        <div class="footer-note">
+          Bản quyền thuộc về IGF Kiosk &copy; 2024
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Hàm hiển thị ảnh thật ra giao diện
+      function renderImages(imageUrls) {
+        const container = document.getElementById("imageContainer");
+        container.innerHTML = ""; // Xóa chữ "Đang tải"
+
+        if (!imageUrls || imageUrls.length === 0) {
+          container.innerHTML = `<div class="error-message">Không tìm thấy ảnh nào trong Album này.</div>`;
+          return;
+        }
+
+        imageUrls.forEach((url) => {
+          const div = document.createElement("div");
+          div.className = "image-item";
+          
+          const img = document.createElement("img");
+          img.src = url; // Gắn URL ảnh thật từ server trả về
+          img.alt = "Ảnh Kiosk";
+          img.loading = "lazy"; // Tối ưu: Chỉ tải ảnh khi cuộn tới
+          
+          div.appendChild(img);
+          container.appendChild(div);
+        });
+      }
+
+      // Logic gọi API thật đến Server
+      // Logic gọi API thật đến Server
+      async function fetchAlbumData() {
+        const container = document.getElementById("imageContainer");
+        
+        // Bắt ID từ thanh địa chỉ
+        const params = new URLSearchParams(window.location.search);
+        const albumId = params.get("id");
+
+        if (!albumId) {
+          container.innerHTML = `<div class="error-message">Mã QR không hợp lệ hoặc thiếu mã Album.</div>`;
+          return;
+        }
+
+        try {
+          // GỌI API + BỔ SUNG HEADER ĐỂ VƯỢT RÀO NGROK
+          const res = await fetch(`/api/album/${albumId}`, {
+            headers: {
+              "ngrok-skip-browser-warning": "true" // 👉 Chìa khóa giải quyết lỗi ở đây
+            }
+          });
+          
+          // Bắt lỗi rào chắn: Nếu Server vẫn trả về HTML (như lỗi 404) thay vì JSON
+          const contentType = res.headers.get("content-type");
+          if (!contentType || !contentType.includes("application/json")) {
+             throw new Error("Lỗi API: Máy chủ trả về HTML thay vì dữ liệu ảnh. Vui lòng kiểm tra lại đường dẫn router.");
+          }
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.message || "Không thể tải ảnh. Mã QR có thể đã hết hạn.");
+          }
+
+          const result = await res.json();
+          
+          if (result.success && result.data) {
+            renderImages(result.data);
+          } else {
+            throw new Error(result.message || "Định dạng dữ liệu từ máy chủ không hợp lệ.");
+          }
+        } catch (error) {
+          container.innerHTML = `<div class="error-message">Lỗi: ${error.message}</div>`;
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", fetchAlbumData);
+    </script>
+  </body>
+</html>

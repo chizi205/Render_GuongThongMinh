@@ -112,7 +112,7 @@ class ZaloService {
       const promises = imageUrls.map(async (url) => {
         const res = await this.requestWithRetry(shopId, {
           method: "POST",
-          url: `${ZALO_API}/v3.0/oa/message/cs`,
+          url: `${ZALO_API}/message/cs`,
           data: {
             recipient: { user_id: zaloUserId },
             message: {

@@ -28,5 +28,5 @@ router.use("/user/send", require("./user/send.routes"));
 router.use("/album", require("./album/album.routes"));
 
 router.use("/webhook",require("./webhooks/zalooa.routes"));
-
+router.use("/webhook",require("./webhooks/payos.routes"));
 module.exports = router;

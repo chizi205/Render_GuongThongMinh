@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tải Ảnh - IGF Kiosk</title>
+
     <style>
       * {
         box-sizing: border-box;
@@ -19,7 +20,6 @@
         --primary-hover: #4338ca;
         --border: #e5e7eb;
         --danger: #dc2626;
-        --success: #15803d;
         --shadow: 0 20px 60px rgba(79, 70, 229, 0.15);
         --radius: 24px;
       }
@@ -27,272 +27,200 @@
       body {
         margin: 0;
         min-height: 100vh;
-        background:
-          radial-gradient(
-            circle at top left,
-            rgba(99, 102, 241, 0.18),
-            transparent 28%
-          ),
-          radial-gradient(
-            circle at bottom right,
-            rgba(139, 92, 246, 0.16),
-            transparent 28%
-          ),
-          var(--bg);
-        color: var(--text);
-      }
-
-      .wrapper {
-        min-height: 100vh;
+        background: var(--bg);
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 20px;
       }
 
       .card {
         width: 100%;
         max-width: 460px;
         background: var(--card);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.7);
         border-radius: var(--radius);
+        padding: 24px;
         box-shadow: var(--shadow);
-        padding: 28px 24px 24px;
-      }
-
-      .brand {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 14px;
-      }
-
-      .brand-badge {
-        min-width: 64px;
-        height: 64px;
-        border-radius: 18px;
-        background: linear-gradient(135deg, #4f46e5, #7c3aed);
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-        font-weight: 800;
-        letter-spacing: 1px;
-        box-shadow: 0 14px 30px rgba(79, 70, 229, 0.35);
       }
 
       .title {
         text-align: center;
-        font-size: 26px;
+        font-size: 24px;
         font-weight: 800;
-        margin-bottom: 8px;
       }
 
       .subtitle {
         text-align: center;
         font-size: 14px;
         color: var(--muted);
-        line-height: 1.5;
-        margin-bottom: 22px;
+        margin-bottom: 16px;
       }
 
       .instruction-box {
         background: rgba(79, 70, 229, 0.08);
         border: 1px solid rgba(79, 70, 229, 0.2);
         color: var(--primary);
-        padding: 14px;
-        border-radius: 16px;
-        font-size: 14px;
-        font-weight: 600;
+        padding: 12px;
+        border-radius: 12px;
         text-align: center;
-        margin-bottom: 20px;
-        line-height: 1.5;
+        margin-bottom: 16px;
+      }
+
+      .download-all-btn {
+        width: 100%;
+        margin-bottom: 16px;
+        padding: 12px;
+        border: none;
+        border-radius: 12px;
+        background: var(--primary);
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .download-all-btn:hover {
+        background: var(--primary-hover);
       }
 
       .image-list {
         display: flex;
         flex-direction: column;
-        gap: 16px;
-      }
-
-      .image-item {
-        width: 100%;
-        border-radius: 16px;
-        overflow: hidden;
-        border: 2px solid var(--border);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-        background: #fff;
-        animation: fadeIn 0.4s ease forwards;
-        opacity: 0;
+        gap: 12px;
       }
 
       .image-item img {
         width: 100%;
-        display: block;
-        object-fit: contain;
-      }
-
-      .image-item:nth-child(1) {
-        animation-delay: 0.1s;
-      }
-      .image-item:nth-child(2) {
-        animation-delay: 0.2s;
-      }
-      .image-item:nth-child(3) {
-        animation-delay: 0.3s;
-      }
-      .image-item:nth-child(4) {
-        animation-delay: 0.4s;
+        border-radius: 12px;
       }
 
       .loading,
-      .error-message {
+      .error {
         text-align: center;
-        padding: 40px 0;
-        font-weight: 600;
+        padding: 20px;
+        font-weight: bold;
       }
 
-      .error-message {
+      .error {
         color: var(--danger);
-      }
-
-      .footer-note {
-        margin-top: 24px;
-        text-align: center;
-        font-size: 13px;
-        color: var(--muted);
-        line-height: 1.5;
-        font-weight: 500;
-      }
-
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @media (max-width: 520px) {
-        .card {
-          padding: 24px 18px 20px;
-          border-radius: 20px;
-        }
-        .title {
-          font-size: 24px;
-        }
       }
     </style>
   </head>
+
   <body>
-    <div class="wrapper">
-      <div class="card">
-        <div class="brand">
-          <div class="brand-badge">IGF</div>
-        </div>
+    <div class="card">
+      <div class="title">Ảnh Của Bạn</div>
+      <div class="subtitle">Cảm ơn bạn đã sử dụng IGF Kiosk</div>
 
-        <div class="title">Ảnh Của Bạn</div>
-        <div class="subtitle">Cảm ơn bạn đã trải nghiệm dịch vụ tại Kiosk</div>
+      <div class="instruction-box">💡 Nhấn nút bên dưới để tải toàn bộ ảnh</div>
 
-        <div class="instruction-box">
-          💡 <b>Hướng dẫn:</b> Nhấn giữ vào từng ảnh bên dưới khoảng 2 giây và
-          chọn "Lưu hình ảnh" để tải về máy nhé!
-        </div>
+      <button id="downloadAllBtn" class="download-all-btn">
+        ⬇️ Tải tất cả ảnh
+      </button>
 
-        <button id="downloadAllBtn" class="download-all-btn">
-          ⬇️ Tải tất cả ảnh
-        </button>
-
-        <div id="imageContainer" class="image-list">
-          <div class="loading">Đang kết nối để tải ảnh...</div>
-        </div>
-
-        <div class="footer-note">Bản quyền thuộc về NVSoft &copy; 2026</div>
+      <div id="imageContainer" class="image-list">
+        <div class="loading">Đang tải ảnh...</div>
       </div>
     </div>
 
     <script>
-      // Hàm hiển thị ảnh thật ra giao diện
-      function renderImages(imageUrls) {
-        const container = document.getElementById("imageContainer");
-        container.innerHTML = ""; // Xóa chữ "Đang tải"
+      let currentImages = [];
 
-        if (!imageUrls || imageUrls.length === 0) {
-          container.innerHTML = `<div class="error-message">Không tìm thấy ảnh nào trong Album này.</div>`;
+      // =========================
+      // Render ảnh
+      // =========================
+      function renderImages(images) {
+        const container = document.getElementById("imageContainer");
+        container.innerHTML = "";
+
+        currentImages = images;
+
+        if (!images || images.length === 0) {
+          container.innerHTML = `<div class="error">Không có ảnh</div>`;
           return;
         }
 
-        imageUrls.forEach((url) => {
+        images.forEach((url) => {
           const div = document.createElement("div");
           div.className = "image-item";
 
           const img = document.createElement("img");
-          img.src = url; // Gắn URL ảnh thật từ server trả về
-          img.alt = "Ảnh Kiosk";
-          img.loading = "lazy"; // Tối ưu: Chỉ tải ảnh khi cuộn tới
+          img.src = url;
 
           div.appendChild(img);
           container.appendChild(div);
         });
       }
 
-      // Logic gọi API thật đến Server
-      // Logic gọi API thật đến Server
-      async function fetchAlbumData() {
+      // =========================
+      // Fetch API
+      // =========================
+      async function fetchAlbum() {
         const container = document.getElementById("imageContainer");
 
-        // Bắt ID từ thanh địa chỉ
         const params = new URLSearchParams(window.location.search);
-        const albumId = params.get("id");
+        const id = params.get("id");
 
-        if (!albumId) {
-          container.innerHTML = `<div class="error-message">Mã QR không hợp lệ hoặc thiếu mã Album.</div>`;
+        if (!id) {
+          container.innerHTML = `<div class="error">QR không hợp lệ</div>`;
           return;
         }
 
         try {
-          // GỌI API + BỔ SUNG HEADER ĐỂ VƯỢT RÀO NGROK
-          const res = await fetch(`/api/album/${albumId}`, {
+          const res = await fetch(`/api/album/${id}`, {
             headers: {
-              "ngrok-skip-browser-warning": "true", // 👉 Chìa khóa giải quyết lỗi ở đây
+              "ngrok-skip-browser-warning": "true",
             },
           });
 
-          // Bắt lỗi rào chắn: Nếu Server vẫn trả về HTML (như lỗi 404) thay vì JSON
-          const contentType = res.headers.get("content-type");
-          if (!contentType || !contentType.includes("application/json")) {
-            throw new Error(
-              "Lỗi API: Máy chủ trả về HTML thay vì dữ liệu ảnh. Vui lòng kiểm tra lại đường dẫn router.",
-            );
-          }
+          const data = await res.json();
 
-          if (!res.ok) {
-            const errorData = await res.json().catch(() => ({}));
-            throw new Error(
-              errorData.message ||
-                "Không thể tải ảnh. Mã QR có thể đã hết hạn.",
-            );
-          }
-
-          const result = await res.json();
-
-          if (result.success && result.data) {
-            renderImages(result.data);
+          if (data.success) {
+            renderImages(data.data);
           } else {
-            throw new Error(
-              result.message || "Định dạng dữ liệu từ máy chủ không hợp lệ.",
-            );
+            throw new Error(data.message);
           }
-        } catch (error) {
-          container.innerHTML = `<div class="error-message">Lỗi: ${error.message}</div>`;
+        } catch (err) {
+          container.innerHTML = `<div class="error">${err.message}</div>`;
         }
       }
 
-      window.addEventListener("DOMContentLoaded", fetchAlbumData);
+      // =========================
+      // Download all
+      // =========================
+      async function downloadAll() {
+        if (!currentImages.length) {
+          alert("Không có ảnh!");
+          return;
+        }
+
+        for (let i = 0; i < currentImages.length; i++) {
+          const url = currentImages[i];
+
+          try {
+            const res = await fetch(url);
+            const blob = await res.blob();
+
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `image_${i + 1}.jpg`;
+            a.click();
+
+            await new Promise((r) => setTimeout(r, 300));
+          } catch (e) {
+            console.error("Lỗi tải ảnh:", e);
+          }
+        }
+      }
+
+      // =========================
+      // INIT
+      // =========================
+      window.addEventListener("DOMContentLoaded", () => {
+        fetchAlbum();
+
+        document
+          .getElementById("downloadAllBtn")
+          .addEventListener("click", downloadAll);
+      });
     </script>
   </body>
 </html>

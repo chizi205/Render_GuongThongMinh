@@ -133,17 +133,26 @@
         object-fit: contain;
       }
 
-      .image-item:nth-child(1) { animation-delay: 0.1s; }
-      .image-item:nth-child(2) { animation-delay: 0.2s; }
-      .image-item:nth-child(3) { animation-delay: 0.3s; }
-      .image-item:nth-child(4) { animation-delay: 0.4s; }
+      .image-item:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .image-item:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .image-item:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      .image-item:nth-child(4) {
+        animation-delay: 0.4s;
+      }
 
-      .loading, .error-message {
+      .loading,
+      .error-message {
         text-align: center;
         padding: 40px 0;
         font-weight: 600;
       }
-      
+
       .error-message {
         color: var(--danger);
       }
@@ -187,21 +196,22 @@
         </div>
 
         <div class="title">Ảnh Của Bạn</div>
-        <div class="subtitle">
-          Cảm ơn bạn đã trải nghiệm dịch vụ tại Kiosk
-        </div>
+        <div class="subtitle">Cảm ơn bạn đã trải nghiệm dịch vụ tại Kiosk</div>
 
         <div class="instruction-box">
-          💡 <b>Hướng dẫn:</b> Nhấn giữ vào từng ảnh bên dưới khoảng 2 giây và chọn "Lưu hình ảnh" để tải về máy nhé!
+          💡 <b>Hướng dẫn:</b> Nhấn giữ vào từng ảnh bên dưới khoảng 2 giây và
+          chọn "Lưu hình ảnh" để tải về máy nhé!
         </div>
+
+        <button id="downloadAllBtn" class="download-all-btn">
+          ⬇️ Tải tất cả ảnh
+        </button>
 
         <div id="imageContainer" class="image-list">
           <div class="loading">Đang kết nối để tải ảnh...</div>
         </div>
 
-        <div class="footer-note">
-          Bản quyền thuộc về  NVSoft &copy; 2026
-        </div>
+        <div class="footer-note">Bản quyền thuộc về NVSoft &copy; 2026</div>
       </div>
     </div>
 
@@ -219,12 +229,12 @@
         imageUrls.forEach((url) => {
           const div = document.createElement("div");
           div.className = "image-item";
-          
+
           const img = document.createElement("img");
           img.src = url; // Gắn URL ảnh thật từ server trả về
           img.alt = "Ảnh Kiosk";
           img.loading = "lazy"; // Tối ưu: Chỉ tải ảnh khi cuộn tới
-          
+
           div.appendChild(img);
           container.appendChild(div);
         });
@@ -234,7 +244,7 @@
       // Logic gọi API thật đến Server
       async function fetchAlbumData() {
         const container = document.getElementById("imageContainer");
-        
+
         // Bắt ID từ thanh địa chỉ
         const params = new URLSearchParams(window.location.search);
         const albumId = params.get("id");
@@ -248,27 +258,34 @@
           // GỌI API + BỔ SUNG HEADER ĐỂ VƯỢT RÀO NGROK
           const res = await fetch(`/api/album/${albumId}`, {
             headers: {
-              "ngrok-skip-browser-warning": "true" // 👉 Chìa khóa giải quyết lỗi ở đây
-            }
+              "ngrok-skip-browser-warning": "true", // 👉 Chìa khóa giải quyết lỗi ở đây
+            },
           });
-          
+
           // Bắt lỗi rào chắn: Nếu Server vẫn trả về HTML (như lỗi 404) thay vì JSON
           const contentType = res.headers.get("content-type");
           if (!contentType || !contentType.includes("application/json")) {
-             throw new Error("Lỗi API: Máy chủ trả về HTML thay vì dữ liệu ảnh. Vui lòng kiểm tra lại đường dẫn router.");
+            throw new Error(
+              "Lỗi API: Máy chủ trả về HTML thay vì dữ liệu ảnh. Vui lòng kiểm tra lại đường dẫn router.",
+            );
           }
 
           if (!res.ok) {
             const errorData = await res.json().catch(() => ({}));
-            throw new Error(errorData.message || "Không thể tải ảnh. Mã QR có thể đã hết hạn.");
+            throw new Error(
+              errorData.message ||
+                "Không thể tải ảnh. Mã QR có thể đã hết hạn.",
+            );
           }
 
           const result = await res.json();
-          
+
           if (result.success && result.data) {
             renderImages(result.data);
           } else {
-            throw new Error(result.message || "Định dạng dữ liệu từ máy chủ không hợp lệ.");
+            throw new Error(
+              result.message || "Định dạng dữ liệu từ máy chủ không hợp lệ.",
+            );
           }
         } catch (error) {
           container.innerHTML = `<div class="error-message">Lỗi: ${error.message}</div>`;

@@ -2,14 +2,15 @@ const express = require("express");
 const router = express.Router();
 const kioskAuth = require("../../middleware/authKiosk");
 const controller = require("../../controllers/kiosk/catalog.controller");
-const { uploadLocal } = require("../../middleware/multerUpload");
 const userAuth = require("../../middleware/authUser");
+
+const {uploadProductSingle} = require("../../middleware/multerUpload");
 router.get("/me/categories", kioskAuth, controller.myCategories);
 router.get("/me/products", kioskAuth, controller.productsByCategory);
 router.get("/products/all", controller.getAllProducts);
 router.post(
   "/products-full",
-  uploadLocal.single("bodyImage"),
+  uploadProductSingle,
   controller.createProductWithImage,
 );
 

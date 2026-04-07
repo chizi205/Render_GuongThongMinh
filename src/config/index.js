@@ -14,6 +14,7 @@ module.exports = {
   },
   upload: {
     dir: process.env.UPLOAD_DIR || "uploads",
+    
   },
   publicUrl:
     process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 3000}`,

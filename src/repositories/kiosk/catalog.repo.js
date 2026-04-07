@@ -18,8 +18,8 @@ const listKioskCategories = async (kioskId) => {
   return rows;
 };
 
-const kioskHasCategory = async (kioskId, categoryId) => {
-  const { rows } = await db.query(
+  const kioskHasCategory = async (kioskId, categoryId) => {
+    const { rows } = await db.query(
     `SELECT 1 FROM kiosk_categories WHERE kiosk_id = $1 AND category_id = $2 LIMIT 1`,
     [kioskId, categoryId]
   );

@@ -3,18 +3,16 @@ const productRepo = require("../../repositories/admin/product.repository");
 const getProducts = async (filters) => {
   const limit = parseInt(filters.limit) || 10;
   
-  // Mẹo: Lấy dư 1 bản ghi (limit + 1) để biết xem còn trang tiếp theo không
+  // Đảm bảo shop_id được truyền vào repository qua object filters
   const products = await productRepo.getProductsByCategory({
     ...filters,
     limit: limit + 1
   });
 
   let nextCursor = null;
-  
-  // Nếu số lượng trả về thực sự lớn hơn limit -> Vẫn còn dữ liệu ở trang sau
   if (products.length > limit) {
-    products.pop(); // Cắt bỏ bản ghi dư thừa đi
-    nextCursor = products[products.length - 1].id; // Lấy ID của bản ghi cuối cùng làm cursor
+    products.pop();
+    nextCursor = products[products.length - 1].id;
   }
 
   return { data: products, nextCursor };
@@ -29,6 +27,17 @@ const updateProduct = async (id, data) => {
 };
 
 const deleteProduct = async (id) => {
+  // 1. Kiểm tra số lượng biến thể đang tồn tại của sản phẩm
+  const variantCount = await productRepo.countVariantsByProductId(id);
+  
+  // 2. Nếu có biến thể (count > 0) -> Ném lỗi ra để Controller bắt
+  if (variantCount > 0) {
+    const error = new Error("PRODUCT_HAS_VARIANTS");
+    error.code = "HAS_VARIANTS"; 
+    throw error;
+  }
+
+  // 3. Đủ điều kiện (không còn biến thể nào) -> Tiến hành xóa
   return await productRepo.deleteProduct(id);
 };
 

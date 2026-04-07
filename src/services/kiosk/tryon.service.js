@@ -27,7 +27,9 @@ const uploadBodyImage = async ({
     kiosk_account_id,
   });
 
-  const bodyImageUrl = `${publicUrl}/${file.path.replace(/\\/g, "/")}`;
+  const bodyImageUrl = `/${file.path.replace(/\\/g, "/")}`;
+
+  await tryonRepo.updateCustomerImageUrl(session.id, bodyImageUrl);
 
   const temp = await tryonRepo.insertTempImage({
     kiosk_session_id: session.id,
@@ -54,115 +56,111 @@ const processTryOn = async ({
     err.status = 400;
     throw err;
   }
+
   const clothType = cloth_type || "upper";
+
   if (!allowedClothTypes.includes(clothType)) {
-    return badRequest(res, "INVALID_CLOTH_TYPE", {
-      good_clothes_types: allowedClothTypes,
-    });
+    const err = new Error("INVALID_CLOTH_TYPE");
+    err.status = 400;
+    err.extra = { allowedClothTypes };
+    throw err;
   }
+
   const temp = await tryonRepo.getTempImage({
     temp_image_id,
     kiosk_session_id,
   });
-  if (!temp) {
-    const err = new Error("TEMP_IMAGE_NOT_FOUND");
-    err.status = 400;
-    throw err;
-  }
+
+  if (!temp) throw new Error("TEMP_IMAGE_NOT_FOUND");
 
   const variant = await tryonRepo.getVariant({ product_variant_id });
-  if (!variant) {
-    const err = new Error("VARIANT_NOT_FOUND");
-    err.status = 400;
-    throw err;
-  }
 
-  const clothFilename = variant.model_3d_url; // tên ảnh đồ
-  if (!clothFilename) {
-    const err = new Error("CLOTH_IMAGE_MISSING");
-    err.status = 400;
-    throw err;
-  }
+  if (!variant) throw new Error("VARIANT_NOT_FOUND");
+
+  const clothFilename = variant.model_3d_url;
+  if (!clothFilename) throw new Error("CLOTH_IMAGE_MISSING");
 
   const UPLOAD_DIR = process.env.UPLOAD_DIR || "uploads";
-  const modelFilePath = path.join(process.cwd(), UPLOAD_DIR, temp.filename);
-  const clothFilePath = path.join(process.cwd(), UPLOAD_DIR, clothFilename);
 
-  if (!fs.existsSync(modelFilePath)) {
-    const err = new Error("BODY_FILE_NOT_FOUND");
-    err.status = 400;
-    err.extra = { modelFilePath };
-    throw err;
-  }
-  if (!fs.existsSync(clothFilePath)) {
-    const err = new Error("CLOTH_FILE_NOT_FOUND");
-    err.status = 400;
-    err.extra = { clothFilePath };
-    throw err;
-  }
+  const modelFilePath = path.join(process.cwd(), temp.url);
+  const clothFilePath = path.join(process.cwd(), clothFilename);
 
-  // gọi Fitroom
+  if (!fs.existsSync(modelFilePath)) throw new Error("BODY_FILE_NOT_FOUND");
+  if (!fs.existsSync(clothFilePath)) throw new Error("CLOTH_FILE_NOT_FOUND");
+
   const task = await fitroom.createTryOnTask(
     modelFilePath,
     clothFilePath,
-    clothType, // <-- dùng cái user chọn
+    clothType,
     true,
   );
 
-  const finalResult = await fitroom.pollTaskUntilComplete(task.task_id);
+  const pollInterval = 1500;
+  const maxAttempts = 20;
 
-  if (!finalResult?.download_signed_url) {
-    const err = new Error("FITROOM_NO_DOWNLOAD_URL");
-    err.status = 502;
+  let finalResult = null;
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const result = await fitroom.getTaskStatus(task.task_id);
+
+    if (result.status === "COMPLETED") {
+      finalResult = result;
+      break;
+    }
+
+    if (result.status === "FAILED") {
+      throw new Error("FITROOM_FAILED");
+    }
+
+    await new Promise((r) => setTimeout(r, pollInterval));
+  }
+
+  if (!finalResult) {
+    const err = new Error("FITROOM_TIMEOUT");
+    err.status = 504;
     throw err;
   }
 
-  // === THÊM PHẦN NÀY: Tải về và lưu vào server của bạn ===
-  // Tạo tên file mới (ví dụ: tryon_<kiosk_session_id>_<timestamp>.jpg)
-  const timestamp = Date.now();
-  const newFilename = `tryon_${kiosk_session_id}_${timestamp}.jpg`;
-  const localSavePath = path.join(process.cwd(), UPLOAD_DIR, newFilename);
+  if (!finalResult.download_signed_url) {
+    throw new Error("NO_DOWNLOAD_URL");
+  }
 
-  // Tải file từ signed URL
+  const filename = `tryon_${kiosk_session_id}_${Date.now()}.jpg`;
+  const savePath = path.join(process.cwd(), UPLOAD_DIR, filename);
+
   const response = await axios({
     url: finalResult.download_signed_url,
     method: "GET",
-    responseType: "stream", // quan trọng: stream để tải file lớn ổn định
+    responseType: "stream",
+    timeout: 15000,
   });
 
-  const writer = fs.createWriteStream(localSavePath);
-
-  response.data.pipe(writer);
-
   await new Promise((resolve, reject) => {
+    const writer = fs.createWriteStream(savePath);
+
+    response.data.pipe(writer);
+
     writer.on("finish", resolve);
     writer.on("error", reject);
   });
 
-  // Optional: check file tồn tại và có kích thước > 0
-  if (!fs.existsSync(localSavePath) || fs.statSync(localSavePath).size === 0) {
-    throw new Error("DOWNLOADED_FILE_INVALID");
+  if (!fs.existsSync(savePath) || fs.statSync(savePath).size === 0) {
+    throw new Error("DOWNLOAD_FAILED");
   }
 
-  // Lưu vào DB: dùng URL/file path của bạn (không dùng signed URL của Fitroom nữa)
   const saved = await tryonRepo.insertTryOn({
     kiosk_session_id,
     product_variant_id,
-    image_url: `/uploads/${newFilename}`, // hoặc full URL nếu bạn serve static files
-    // hoặc nếu dùng S3/Cloud Storage: s3Key hoặc public URL
-    metadata: {
-      ...finalResult,
-      original_fitroom_url: finalResult.download_signed_url, // lưu tạm để debug
-      saved_filename: newFilename,
-    },
+    image_url: `/uploads/${filename}`,
+    metadata: finalResult,
   });
 
   await tryonRepo.markTempUsed({ temp_image_id });
 
   return {
     try_on_id: saved.id,
-    downloadUrl: saved.image_url, // bây giờ là URL permanent của bạn
-    status: finalResult.status,
+    downloadUrl: saved.image_url,
+    status: "COMPLETED",
   };
 };
 

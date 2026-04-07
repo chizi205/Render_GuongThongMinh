@@ -2,20 +2,19 @@ const express = require("express");
 const router = express.Router();
 const productController = require("../../controllers/admin/product.controller");
 const adminAuth = require("../../middleware/authAdmin");
-const multer = require("multer");
 
-// Config Multer để lưu ảnh
-const upload = multer({ dest: 'public/uploads/' }); 
+// IMPORT middleware chúng ta vừa cấu hình
+const { uploadProductSingle, uploadVariantSingle } = require("../../middleware/multerUpload");
 
-// API Sản phẩm chính
+// API Sản phẩm chính (Dùng uploadProductSingle cho key "image")
 router.get("/", adminAuth, productController.getProducts);
-router.post("/", adminAuth, upload.single("image"), productController.createProduct);
-router.put("/:id", adminAuth, upload.single("image"), productController.updateProduct);
+router.post("/", adminAuth, uploadProductSingle, productController.createProduct);
+router.put("/:id", adminAuth, uploadProductSingle, productController.updateProduct);
 router.delete("/:id", adminAuth, productController.deleteProduct);
 
-// API Biến thể
-router.post("/:productId/variants", adminAuth, upload.single("images"), productController.createVariant);
-router.put("/variants/:variantId", adminAuth, upload.single("images"), productController.updateVariant);
+// API Biến thể (Dùng uploadVariantSingle cho key "images")
+router.post("/:productId/variants", adminAuth, uploadVariantSingle, productController.createVariant);
+router.put("/variants/:variantId", adminAuth, uploadVariantSingle, productController.updateVariant);
 router.delete("/variants/:variantId", adminAuth, productController.deleteVariant);
 
 module.exports = router;

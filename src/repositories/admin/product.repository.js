@@ -5,29 +5,34 @@ const { pool } = require("../../config/database");
 // ==========================================
 
 // Lấy danh sách (Có: Phân trang Cursor, Lọc Category, Tìm kiếm Tên)
-const getProductsByCategory = async ({ category_id, search, limit = 10, cursor = null }) => {
+const getProductsByCategory = async ({ shop_id, category_id, search, limit = 10, cursor = null }) => {
   let queryParams = [limit];
-  let whereClause = `WHERE p.deleted_at IS NULL`;
+  let whereClause = `WHERE p.is_deleted = false`;
   
+  // --- THÊM LỌC THEO SHOP ---
+  if (shop_id) {
+    whereClause += ` AND p.shop_id = $${queryParams.length + 1}`;
+    queryParams.push(shop_id);
+  }
+
   // Lọc theo danh mục
   if (category_id) {
     whereClause += ` AND p.category_id = $${queryParams.length + 1}`;
     queryParams.push(category_id);
   }
 
-  // Lọc theo từ khóa tìm kiếm (Tên sản phẩm)
+  // Lọc theo từ khóa tìm kiếm
   if (search) {
     whereClause += ` AND p.name ILIKE $${queryParams.length + 1}`;
     queryParams.push(`%${search}%`);
   }
 
-  // Phân trang bằng Cursor
+  // Phân trang bằng Cursor (Sử dụng ID)
   if (cursor) {
     whereClause += ` AND p.id < $${queryParams.length + 1}`;
     queryParams.push(cursor);
   }
 
-  // Lấy Sản phẩm & Tên danh mục
   const sql = `
     SELECT p.*, c.name as category_name
     FROM products p
@@ -39,8 +44,7 @@ const getProductsByCategory = async ({ category_id, search, limit = 10, cursor =
 
   const result = await pool.query(sql, queryParams);
   const products = result.rows;
-
-  // Lấy thêm danh sách Biến thể (Variants) nhét vào trong Sản phẩm
+  
   if (products.length > 0) {
     const productIds = products.map(p => p.id);
     const variantsResult = await pool.query(`
@@ -48,31 +52,61 @@ const getProductsByCategory = async ({ category_id, search, limit = 10, cursor =
       WHERE product_id = ANY($1)
       ORDER BY created_at ASC
     `, [productIds]);
-    
+      
     products.forEach(p => {
-      // Lọc các biến thể thuộc về sản phẩm này
       p.variants = variantsResult.rows.filter(v => v.product_id === p.id);
       
-      // MẸO: Vì bảng 'products' trong db.sql không có cột 'image_url', 
-      // ta tự động lấy ảnh của biến thể đầu tiên làm ảnh đại diện hiển thị ra Table.
-      if (p.variants.length > 0 && p.variants[0].image_urls && p.variants[0].image_urls.length > 0) {
-        p.image_url = p.variants[0].image_urls[0];
+      if (p.variants.length > 0) {
+        // ĐÃ SỬA: Ưu tiên lấy ảnh từ model_3d_url làm ảnh hiển thị chính (image_url)
+        // Nếu không có thì mới dự phòng lấy từ mảng image_urls
+        p.image_url = p.variants[0].model_3d_url || (p.variants[0].image_urls?.length > 0 ? p.variants[0].image_urls[0] : null);
+      } else {
+        p.image_url = null;
       }
     });
   }
-
   return products;
+};
+
+const getProductById = async (id) => {
+  const sql = `
+    SELECT p.*, c.name as category_name
+    FROM products p
+    LEFT JOIN product_categories c ON p.category_id = c.id
+    WHERE p.id = $1 AND p.is_deleted = false
+  `;
+  const res = await pool.query(sql, [id]);
+  const product = res.rows[0];
+
+  if (product) {
+    const variantsResult = await pool.query(`
+      SELECT * FROM product_variants 
+      WHERE product_id = $1
+      ORDER BY created_at ASC
+    `, [id]);
+    
+    product.variants = variantsResult.rows;
+
+    if (product.variants.length > 0) {
+      const firstVariant = product.variants[0];
+      product.model_3d_url = firstVariant.model_3d_url || null;
+      
+      // ĐÃ SỬA: Ưu tiên lấy ảnh từ model_3d_url
+      product.image_url = firstVariant.model_3d_url || (firstVariant.image_urls?.length > 0 ? firstVariant.image_urls[0] : null);
+    }
+  }
+
+  return product;
 };
 
 // Tạo Sản phẩm
 const createProduct = async (data) => {
-  // Lưu ý: shop_id bắt buộc phải có theo schema db.sql của bạn
   const { shop_id, category_id, name, description, status } = data;
   const sql = `
-    INSERT INTO products (shop_id, category_id, name, description, status, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+    INSERT INTO products (shop_id, category_id, name, description, status, is_deleted, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, false, NOW(), NOW())
     RETURNING *;
-  `;
+  `; 
   const values = [shop_id, category_id, name, description, status || 'active'];
   const result = await pool.query(sql, values);
   return result.rows[0];
@@ -89,7 +123,7 @@ const updateProduct = async (id, data) => {
       description = COALESCE($3, description),
       status = COALESCE($4, status),
       updated_at = NOW()
-    WHERE id = $5 AND deleted_at IS NULL
+    WHERE id = $5 AND is_deleted = false
     RETURNING *;
   `;
   const values = [category_id, name, description, status, id];
@@ -97,12 +131,12 @@ const updateProduct = async (id, data) => {
   return result.rows[0];
 };
 
-// Xóa Sản phẩm (Soft Delete)
+// Xóa Sản phẩm (Xóa mềm - Soft Delete)
 const deleteProduct = async (id) => {
   const sql = `
     UPDATE products 
-    SET deleted_at = NOW(), updated_at = NOW()
-    WHERE id = $1
+    SET is_deleted = true, status = 'inactive', updated_at = NOW()
+    WHERE id = $1 AND is_deleted = false
     RETURNING *;
   `;
   const result = await pool.query(sql, [id]);
@@ -114,6 +148,13 @@ const deleteProduct = async (id) => {
 // 2. QUẢN LÝ BIẾN THỂ (VARIANTS)
 // ==========================================
 
+// Hàm đếm số lượng biến thể của sản phẩm
+const countVariantsByProductId = async (productId) => {
+  const sql = `SELECT COUNT(*) FROM product_variants WHERE product_id = $1`;
+  const result = await pool.query(sql, [productId]);
+  return parseInt(result.rows[0].count, 10);
+};
+
 // Tạo Biến thể
 const createVariant = async (data) => {
   const { product_id, sku, size, color, price, stock, model_3d_url, image_urls } = data;
@@ -123,7 +164,6 @@ const createVariant = async (data) => {
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
     RETURNING *;
   `;
-  // DB yêu cầu image_urls là mảng text[] nên phải truyên mảng vào đây
   const values = [product_id, sku, size, color, price, stock || 0, model_3d_url, image_urls || []];
   const result = await pool.query(sql, values);
   return result.rows[0];
@@ -151,7 +191,7 @@ const updateVariant = async (id, data) => {
   return result.rows[0];
 };
 
-// Xóa Biến thể (Hard Delete - Xóa cứng vì bảng này thường không cần soft delete)
+// Xóa Biến thể (Giữ nguyên Hard Delete theo code gốc của bạn)
 const deleteVariant = async (id) => {
   const sql = `DELETE FROM product_variants WHERE id = $1 RETURNING *;`;
   const result = await pool.query(sql, [id]);
@@ -160,9 +200,11 @@ const deleteVariant = async (id) => {
 
 module.exports = {
   getProductsByCategory,
+  getProductById,
   createProduct,
   updateProduct,
   deleteProduct,
+  countVariantsByProductId,
   createVariant,
   updateVariant,
   deleteVariant

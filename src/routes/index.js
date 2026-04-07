@@ -7,6 +7,9 @@ router.use("/admin/kiosks", require("./admin/kiosks.routes"));
 router.use("/admin/customers", require("./admin/customer.routes"));
 router.use("/admin/products", require("./admin/product.routes"));
 router.use("/admin/categories", require("./admin/category.routes"));
+router.use("/admin/marketing/send-tryon", require("./admin/sendMarketingTryOn.routes"));
+router.use("/admin/dashboard", require("./admin/dashboard.routes"));
+router.use("/admin/kiosks", require("./admin/kiosks.routes"));
 
 router.use("/shop/auth", require("./shop/auth.routes"));
 router.use("/shop/products", require("./shop/products.routes"));

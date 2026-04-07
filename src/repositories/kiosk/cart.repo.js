@@ -1,8 +1,5 @@
 const { pool } = require("../../config/database");
 
-// ========================================
-// LẤY CART ACTIVE THEO SESSION
-// ========================================
 const getActiveCartBySession = async (kioskSessionId, kioskId) => {
   const query = `
     SELECT *
@@ -16,9 +13,6 @@ const getActiveCartBySession = async (kioskSessionId, kioskId) => {
   return res.rows[0];
 };
 
-// ========================================
-// TẠO CART
-// ========================================
 const createCart = async (data) => {
   const query = `
     INSERT INTO carts (shop_id, kiosk_id, kiosk_session_id, user_id)

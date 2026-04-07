@@ -25,6 +25,28 @@ const sendImages = async (req, res) => {
     return serverError(res, err.message);
   }
 };
+const sendImagesForAdmin = async (req, res) => {
+  try {
+    const { user_id, images, shop_id } = req.body;
+
+    if (!images) {
+      return serverError(res, "MISSING_IMAGES");
+    }
+
+    const data = await service.sendImages(shop_id, user_id, images);
+
+    return ok(res, 200, {
+      message: "SEND_IMAGES_SUCCESS",
+      data,
+    });
+  } catch (err) {
+    if (err.message === "USER_NOT_LINKED_ZALO") {
+      return serverError(res, "USER_NOT_FOLLOW_ZALO_OA");
+    }
+
+    return serverError(res, err.message);
+  }
+};
 const sendText = async (req, res) => {
   try {
     const user_id = req.user.user_id;
@@ -52,4 +74,5 @@ const sendText = async (req, res) => {
 module.exports = {
   sendImages,
   sendText,
+  sendImagesForAdmin
 };

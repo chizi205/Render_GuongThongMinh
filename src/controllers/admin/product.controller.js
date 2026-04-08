@@ -100,7 +100,7 @@ const updateProduct = async (req, res) => {
     let image_url = undefined;
     if (req.file) {
       const filePath = req.file.path.replace(/\\/g, "/");
-      image_url = "/" + filePath.substring(filePath.indexOf("uploads"));
+      image_url = filePath.substring(filePath.indexOf("uploads"));
     }
 
     // Nếu người dùng có cập nhật Tên, mình cũng cập nhật lại Slug
@@ -158,6 +158,9 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+// ==========================================
+// QUẢN LÝ BIẾN THỂ (VARIANTS)
+// ==========================================
 const createVariant = async (req, res) => {
   try {
     const { productId } = req.params;

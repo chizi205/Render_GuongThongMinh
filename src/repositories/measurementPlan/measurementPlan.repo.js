@@ -30,14 +30,13 @@ const getCustomersByPlan = async ({ plan_id }) => {
     SELECT 
       pd.id AS plan_detail_id,
       c.id AS customer_id,
-      c.name,
+      c.full_name,
       c.phone,
       pd.status,
       pd.created_at
     FROM plan_details pd
-    JOIN customers c ON pd.customer_id = c.id
+    JOIN users c ON pd.user_id = c.id
     WHERE pd.plan_id = $1
-      AND pd.is_deleted = FALSE
     ORDER BY pd.created_at DESC
     `,
     [plan_id],
@@ -48,5 +47,5 @@ const getCustomersByPlan = async ({ plan_id }) => {
 
 module.exports = {
   getPlansByShop,
-  getCustomersByPlan
+  getCustomersByPlan,
 };

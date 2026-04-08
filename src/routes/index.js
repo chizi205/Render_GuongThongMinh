@@ -27,6 +27,11 @@ router.use("/orders", require("./order/order.routes"));
 router.use("/customers", require("./customer/customer.routes"));
 router.use("/advertise", require("./advertise/advertise.routes"));
 
+router.use("/staff/auth", require("./staff/auth.routes"));
+
+router.use("/plans", require("./measurementPlan/measurementPlan.route"));//api/measurementPlan/plans
+router.use("/plans", require("./measurementPlan/planDetail.route"));
+
 router.use("/user/auth", require("./user/auth.routes"));
 router.use("/user/info", require("./user/info.route"));
 router.use("/user/send", require("./user/send.routes"));

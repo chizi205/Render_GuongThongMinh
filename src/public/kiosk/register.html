@@ -285,8 +285,13 @@
 
         <div class="entry-actions">
           <button type="button" class="entry-btn active" id="showLoginBtn">
-            Đăng nhập
+            Khách hàng
           </button>
+
+          <button type="button" class="entry-btn" id="showStaffBtn">
+            Nhân viên
+          </button>
+
           <button type="button" class="entry-btn" id="showRegisterBtn">
             Đăng ký
           </button>
@@ -317,13 +322,34 @@
                 placeholder="Nhập mật khẩu"
                 required
               />
-            </div>     
+            </div>
 
             <button type="submit" class="submit-btn" id="loginSubmitBtn">
               Đăng nhập
             </button>
 
             <div id="loginMessage" class="message"></div>
+          </form>
+        </div>
+
+        <!-- STAFF LOGIN PANEL -->
+        <div class="panel" id="staffPanel">
+          <form id="staffForm">
+            <div class="form-group">
+              <label>Số điện thoại</label>
+              <input type="tel" id="staff_phone" required />
+            </div>
+
+            <div class="form-group">
+              <label>Mật khẩu</label>
+              <input type="password" id="staff_password" required />
+            </div>
+
+            <button type="submit" class="submit-btn" id="staffSubmitBtn">
+              Đăng nhập nhân viên
+            </button>
+
+            <div id="staffMessage" class="message"></div>
           </form>
         </div>
 
@@ -431,24 +457,26 @@
       const showRegisterBtn = document.getElementById("showRegisterBtn");
       const loginPanel = document.getElementById("loginPanel");
       const registerPanel = document.getElementById("registerPanel");
+      const showStaffBtn = document.getElementById("showStaffBtn");
+      const staffPanel = document.getElementById("staffPanel");
 
       function switchPanel(type) {
-        const isLogin = type === "login";
+        showLoginBtn.classList.toggle("active", type === "login");
+        showStaffBtn.classList.toggle("active", type === "staff");
+        showRegisterBtn.classList.toggle("active", type === "register");
 
-        showLoginBtn.classList.toggle("active", isLogin);
-        showRegisterBtn.classList.toggle("active", !isLogin);
-
-        loginPanel.classList.toggle("active", isLogin);
-        registerPanel.classList.toggle("active", !isLogin);
+        loginPanel.classList.toggle("active", type === "login");
+        staffPanel.classList.toggle("active", type === "staff");
+        registerPanel.classList.toggle("active", type === "register");
 
         document.getElementById("loginMessage").textContent = "";
         document.getElementById("registerMessage").textContent = "";
-        document.getElementById("loginMessage").className = "message";
-        document.getElementById("registerMessage").className = "message";
+        document.getElementById("staffMessage").textContent = "";
       }
 
       showLoginBtn.addEventListener("click", () => switchPanel("login"));
       showRegisterBtn.addEventListener("click", () => switchPanel("register"));
+      showStaffBtn.addEventListener("click", () => switchPanel("staff"));
 
       const loginForm = document.getElementById("loginForm");
       const registerForm = document.getElementById("registerForm");
@@ -525,6 +553,69 @@
         } finally {
           loginSubmitBtn.disabled = false;
           loginSubmitBtn.textContent = "Đăng nhập";
+        }
+      });
+
+      const staffForm = document.getElementById("staffForm");
+
+      staffForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const msg = document.getElementById("staffMessage");
+        const btn = document.getElementById("staffSubmitBtn");
+
+        msg.textContent = "";
+        msg.className = "message";
+
+        const payload = {
+          phone: document.getElementById("staff_phone").value.trim(),
+          password: document.getElementById("staff_password").value.trim(),
+          session_id: sessionId,
+        };
+
+        if (!payload.phone || !payload.password) {
+          msg.textContent = "Vui lòng nhập đầy đủ thông tin";
+          msg.classList.add("error");
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "Đang đăng nhập...";
+
+        try {
+          const res = await fetch("/api/staff/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.message || "Đăng nhập thất bại");
+          }
+
+          // 🔥 lưu token staff
+          localStorage.setItem("staff_access_token", data.data.access_token);
+          localStorage.setItem(
+            "staff_profile",
+            JSON.stringify(data.data.staff),
+          );
+
+          msg.textContent = "Đăng nhập nhân viên thành công";
+          msg.classList.add("success");
+
+          setTimeout(() => {
+            window.close();
+          }, 1000);
+        } catch (err) {
+          msg.textContent = err.message || "Có lỗi xảy ra";
+          msg.classList.add("error");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Đăng nhập nhân viên";
         }
       });
 

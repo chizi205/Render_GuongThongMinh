@@ -112,8 +112,9 @@ const processTryOn = async ({
     resizedModelPath,
     resizedClothPath,
     clothType,
-    false, // ←←← ĐÃ ĐỔI TỪ true → false (tắt HD mode)
+    true, // ←←← ĐÃ ĐỔI TỪ true → false (tắt HD mode)
   );
+ 
 
   // ==================== POLLING NHANH HƠN ====================
   const pollInterval = 1000; // 1 giây
@@ -137,7 +138,7 @@ const processTryOn = async ({
 
     await new Promise((r) => setTimeout(r, pollInterval));
   }
-
+   console.log(finalResult.download_signed_url);
   if (!finalResult) {
     fs.unlinkSync(resizedModelPath);
     fs.unlinkSync(resizedClothPath);
